@@ -60,4 +60,4 @@ steps:
   displayName: NuGet push to artifact nuget feeds
   inputs:
     command: push
-    publishVstsFeed: 'lmendon8/todofeed'
+    publishVstsFeed: 'class-library-projects/classfeed'
