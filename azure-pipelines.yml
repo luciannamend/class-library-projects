@@ -14,7 +14,6 @@ variables:
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   packageOutputDirectory: '$(Build.ArtifactStagingDirectory)/packages'
-  feedName: 'lmendon8'
 
 steps:
 - task: UseDotNet@2
@@ -34,35 +33,31 @@ steps:
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
-  displayName: 'Build Solution'
   inputs:
     solution: '$(solution)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
 - task: VSTest@2
-  displayName: 'Run Unit Tests'
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Pack SDK-style Project'
+- task: PublishBuildArtifacts@1
   inputs:
-    command: 'pack'
-    packagesToPack: '**/ShowCase.csproj'
-    versioningScheme: 'off' 
-    outputDir: '$(Build.ArtifactStagingDirectory)/packages'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'ShowCase'
+    publishLocation: 'Container'
 
-- script: |
-    echo "Listing contents of $(Build.ArtifactStagingDirectory)/packages"
-    dir "$(Build.ArtifactStagingDirectory)/packages"
-  displayName: 'List Package Files'
+- task: DotNetCoreCLI@2
+  displayName: dotnet pack
+  inputs:
+    command: pack
+    versioningScheme: byPrereleaseNumber
 
-
-- script: |
-    dotnet nuget push "$(Build.ArtifactStagingDirectory)/packages/ShowCase.1.0.0.nupkg" --source "https://dev.azure.com/lmendon8/class-library-projects/_artifacts/feed/lmendon8" --api-key az
-  displayName: 'Push NuGet Package to Azure Artifacts'
-
-
-
+- task: NuGetCommand@2
+  displayName: NuGet push to artifact nuget feeds
+  inputs:
+    command: push
+    publishVstsFeed: 'lmendon8/todofeed'
